@@ -1,0 +1,7 @@
+*.pyc
+res/*
+bin
+include
+lib
+local
+.Python
