@@ -4,19 +4,21 @@ import docker
 import json
 
 class Service(object):
-    def __init__(self, container_id, name, cmd, ports, status='RUN'):
+    def __init__(self, container_id, name, image, cmd, ports, status='RUN'):
         self.ip = HOST_IP
         self.id = container_id
-        self.service = name
+        self.name = name
+        self.image = image
         self.ports = ports
         self.status = status
         self.cmd = cmd
+        self.name
 
     def __str__(self):
         return """id:{0}, desc:{1}, port(s):{2}, status:{3}
             """.format(
                 self.id, 
-                self.service_name + self.cmd, 
+                ':'.join([self.name, self.image, self.cmd], 
                 self.ports, 
                 self.status)
     def __repr__(self):
@@ -38,13 +40,15 @@ class ServiceLocator(object):
             version=DOCKER_V, 
             timeout=TIMEOUT)
         
-    @gen.engine
     def services(self, callback):
         services = map(h2o, self.client.containers())
-        callback([
-            Service(x.Id, x.Image, X.Command, x.Ports, x.Status.split()[0]) \
-            for x in services
-        ])
+        res = {}
+        for s in services:
+            res[s.Names[0]] = 
+                Service(
+                    s.Id, s.Names[0], s.Image, s.Command, 
+                    s.Ports, s.Status.split()[0])
+        return res
 
 
 class NodeController(object):
@@ -54,25 +58,26 @@ class NodeController(object):
         self._client = self._locator._client
         self.config = json.load(open(CONFIG_PATH))
         for service,config in self.config:
-            self.config[service] = h2o(config)        
-
-    @gen.engine
-    def services(self, callback):
-        services = yield gen.Task(str(self._locator.services))
-        callback(services)
+            self.config[service] = h2o(config)             
 
     def available_services(self):
         return self.config.keys()
 
     def start_service(self, service):
-        self._client.create_container(
-            service, command=self.config[service].cmd)
+        cnf = self.config[service]
+        cid = self._client.create_container(
+            image=cnf.image, 
+            ports=cnf.ports, 
+            detach=True, 
+            command=cnf.cmd,
+            name=service)
+        self.start_service(cid, cnf.port_bindings)
 
-    def start_service(self, cid):
-        self._client.start(cid)
+    def start_service(self, cid, pb=None):
+        self._client.start(cid, port_bindings=pb)
 
     def stop_service(self, cid):
-        self._client.start(cid)
+        self._client.stop(cid)
 
     def kill_service(self, cid):
         self._client.kill(cid)
