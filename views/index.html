@@ -1,0 +1,53 @@
+<html>
+    <head></head>
+    <body>
+        <h1> Welcome to Node {{ip}} </h1>
+
+        <h2>Running services:</h2>
+        <ul>
+            {% for service in services %}
+                <hr>
+                <li>
+                    <table>
+                        <tr>
+                            <td>{{service}}</td>
+                            
+                            <td>
+                                <form metthod='post' action='/service/stop'>
+                                    <input type='hidden' value='{{service.id}}'>
+                                    <input type='submit' value='Stop'>
+                                </form>
+                            </td>
+
+                            <td>
+                                <form metthod='post' action='/service/kill'>
+                                    <input type='hidden' value='{{service.id}}'>
+                                    <input type='submit' value='KILL'>
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
+                </li>
+            {% end %}
+        </ul>
+
+        <h2> Available services:</h2>
+        <ul>
+            {% for service in available_services %}
+                <li>{{service}}</li>
+            {% end %}
+        </ul>
+
+        <h2>Start Service</h2>
+        <form metthod='post' action='/service/run'>
+            <select name='name'>
+                {% for service in available_services %}
+                    <option value='{{service}}'>{{service}}</option>
+                {% end %}
+            </select>
+
+            <input type='submit' value='Start'>
+        </form>
+
+    </body>
+</html>

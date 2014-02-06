@@ -36,19 +36,17 @@ def h2o(x):
 class ServiceLocator(object):
 
     def __init__(self):
-        self.client = docker.Client(
+        self._client = docker.Client(
             base_url=DOCKER_SOCK,
             version=DOCKER_V, 
             timeout=TIMEOUT)
         
-    def services(self, callback):
-        services = map(h2o, self.client.containers())
-        res = {}
-        for s in services:
-            res[s.Names[0]] = Service(
+    def services(self):
+        services = map(h2o, self._client.containers())
+        return [Service(
                     s.Id, s.Names[0], s.Image, s.Command, 
-                    s.Ports, s.Status.split()[0])
-        return res
+                    s.Ports, s.Status.split()[0]) \
+                for s in services]
 
 
 class NodeController(object):
@@ -57,9 +55,14 @@ class NodeController(object):
         self._locator = ServiceLocator()
         self._client = self._locator._client
         self.config = json.load(open(CONFIG_PATH))
-        for service,config in self.config:
-            self.config[service] = h2o(config)             
+        for service,config in self.config.items():
+            self.config[service] = h2o(config)
 
+    @property
+    def services(self):
+        return self._locator.services()             
+
+    @property
     def available_services(self):
         return self.config.keys()
 
@@ -92,14 +95,22 @@ class NodeController(object):
             self.start_service(service)
 
 
-
 class MainHandler(web.RequestHandler):
-    def get(self):
-        self.write("")
+    _nc = NodeController()
 
-application = web.Application([
-    (r"/", MainHandler),
-])
+    @web.asynchronous
+    @gen.engine
+    def get(self):
+        self.render(
+            'index.html', 
+            services=self._nc.services, 
+            available_services=self._nc.available_services, 
+            ip=HOST_IP)
+
+application = web.Application(
+    handlers=[(r"/", MainHandler)],
+    template_path=os.path.join(APP_ROOT, 'views')
+)
 
 if __name__ == "__main__":
     application.listen(HTTP_PORT)

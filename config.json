@@ -21,14 +21,6 @@
         "ports": [9889],
         "port_bindings": {"9889":9889},
         "deps": []
-    },
-
-    "default": {
-        "image": "py-base",
-        "cmd": "/bin/bash",
-        "ports": [],
-        "port_bindings": {},
-        "deps": []
     }
 
 }
