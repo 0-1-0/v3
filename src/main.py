@@ -1,7 +1,7 @@
 from tornado import web, gen, ioloop
-from locator import ServiceLocator
 import docker
 import json
+from settings import *
 
 class Service(object):
     def __init__(self, container_id, name, image, cmd, ports, status='RUN'):
@@ -18,7 +18,7 @@ class Service(object):
         return """id:{0}, desc:{1}, port(s):{2}, status:{3}
             """.format(
                 self.id, 
-                ':'.join([self.name, self.image, self.cmd], 
+                ':'.join([self.name, self.image, self.cmd]), 
                 self.ports, 
                 self.status)
     def __repr__(self):
@@ -44,8 +44,7 @@ class ServiceLocator(object):
         services = map(h2o, self.client.containers())
         res = {}
         for s in services:
-            res[s.Names[0]] = 
-                Service(
+            res[s.Names[0]] = Service(
                     s.Id, s.Names[0], s.Image, s.Command, 
                     s.Ports, s.Status.split()[0])
         return res
@@ -78,7 +77,6 @@ class NodeController(object):
 
     def stop_service(self, cid):
         self._client.stop(cid)
-
     def kill_service(self, cid):
         self._client.kill(cid)
 
