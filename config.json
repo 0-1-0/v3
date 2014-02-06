@@ -1,0 +1,30 @@
+{
+    "buider":{
+        "image": "builder",
+        "cmd": "/builder/bin/run",
+        "ports": ["8888:8888"],
+        "deps": ["auth", "static"]
+    },
+
+    "static": {
+        "image": "static",
+        "cmd": "/static/bin/run",
+        "ports": ["9890:9890", "8890:8890"],
+        "deps": []
+    },
+
+    "auth": {
+        "image": "auth",
+        "cmd": "/auth/bin/run",
+        "ports": ["9889:9889"],
+        "deps": []
+    },
+
+    "default": {
+        "image": "py-base",
+        "cmd": "/bin/bash",
+        "ports": [],
+        "deps": []
+    }
+
+}

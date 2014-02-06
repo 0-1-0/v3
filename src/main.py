@@ -1,6 +1,7 @@
 from tornado import web, gen, ioloop
 from locator import ServiceLocator
 import docker
+import json
 
 class Service(object):
     def __init__(self, container_id, name, cmd, ports, status='RUN'):
@@ -51,35 +52,35 @@ class NodeController(object):
     def __init__(self):
         self._locator = ServiceLocator()
         self._client = self._locator._client
-
-    #TODO: implement matching, based on config file
-    def get_launch_command(self, service_name):
-        pass 
+        self.config = json.load(open(CONFIG_PATH))
+        for service,config in self.config:
+            self.config[service] = h2o(config)        
 
     @gen.engine
     def services(self, callback):
         services = yield gen.Task(str(self._locator.services))
         callback(services)
 
-    def start_service(self, service_name):
+    def available_services(self):
+        return self.config.keys()
+
+    def start_service(self, service):
         self._client.create_container(
-            name, command=self.get_launch_command(service_name))
+            service, command=self.config[service].cmd)
 
-    def start_service(self, id):
-        pass
+    def start_service(self, cid):
+        self._client.start(cid)
 
-    def stop_service(self, id):
-        self._client.start(id)
+    def stop_service(self, cid):
+        self._client.start(cid)
 
-    def kill_service(self, id):
-        self._client.kill(id)
-
-
+    def kill_service(self, cid):
+        self._client.kill(cid)
 
 
 class MainHandler(web.RequestHandler):
     def get(self):
-        self.write("Hello, world")
+        self.write("")
 
 application = web.Application([
     (r"/", MainHandler),
