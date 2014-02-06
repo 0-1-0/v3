@@ -18,9 +18,9 @@ class Service(object):
     def __str__(self):
         return """id:{0}, desc:{1}, port(s):{2}, status:{3}
             """.format(
-                self.id, 
-                ':'.join([self.name, self.image, self.cmd]), 
-                self.ports, 
+                self.id,
+                ':'.join([self.name, self.image, self.cmd]),
+                self.ports,
                 self.status)
     def __repr__(self):
         return self.__str__()
@@ -38,13 +38,13 @@ class ServiceLocator(object):
     def __init__(self):
         self._client = docker.Client(
             base_url=DOCKER_SOCK,
-            version=DOCKER_V, 
+            version=DOCKER_V,
             timeout=TIMEOUT)
-        
+
     def services(self):
         services = map(h2o, self._client.containers())
         return [Service(
-                    s.Id, s.Names[0], s.Image, s.Command, 
+                    s.Id, s.Names[0], s.Image, s.Command,
                     s.Ports, s.Status.split()[0].upper()) \
                 for s in services]
 
@@ -60,21 +60,20 @@ class NodeController(object):
 
     @property
     def services(self):
-        return self._locator.services()             
+        return self._locator.services()
 
     @property
     def available_services(self):
         return self.config.keys()
 
-    def start_service(self, service_name):
+    def run_service(self, service_name):
         cnf = self.config[service_name]
         cid = self._client.create_container(
-            image=cnf.image, 
-            ports=cnf.ports, 
-            detach=True, 
-            command=cnf.cmd,
-            name=service_name)
-        self.start_service(cid, cnf.port_bindings)
+            image=cnf.image,
+            ports=cnf.ports,
+            detach=True,
+            command=cnf.cmd)
+        self.start_service(cid, cnf.port_bindings.__dict__)
 
     def start_service(self, cid, pb=None):
         self._client.start(cid, port_bindings=pb)
@@ -106,9 +105,9 @@ class MainHandler(BaseHandler):
     @gen.engine
     def get(self):
         self.render(
-            'index.html', 
-            services=self._nc.services, 
-            available_services=self._nc.available_services, 
+            'index.html',
+            services=self._nc.services,
+            available_services=self._nc.available_services,
             ip=HOST_IP)
 
 class ServiceHandler(BaseHandler):
@@ -127,7 +126,7 @@ class ServiceHandler(BaseHandler):
 application = web.Application(
     handlers=[
         (r"/", MainHandler),
-        (r"/service/.*/.*", ServiceHandler),
+        (r"/service/.*", ServiceHandler),
     ],
     template_path=os.path.join(APP_ROOT, 'views')
 )

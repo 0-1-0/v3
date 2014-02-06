@@ -14,12 +14,12 @@
                             
                             <td>
                                 {% if service.status == 'UP' %}
-                                    <form metthod='post' action='/service/stop'>
+                                    <form method='post' action='/service/stop'>
                                         <input type='hidden' name='id' value='{{service.id}}'>
                                         <input type='submit' value='Stop'>
                                     </form>
                                 {% else %}
-                                    <form metthod='post' action='/service/start'>
+                                    <form method='post' action='/service/start'>
                                         <input type='hidden' name='id' value='{{service.id}}'>
                                         <input type='submit' value='Start'>
                                     </form>
@@ -27,14 +27,14 @@
                             </td>
 
                             <td>
-                                <form metthod='post' action='/service/kill'>
+                                <form method='post' action='/service/kill'>
                                     <input type='hidden' name='id' value='{{service.id}}'>
                                     <input type='submit' value='Kill'>
                                 </form>
                             </td>
 
                             <td>
-                                <form metthod='post' action='/service/restart'>
+                                <form method='post' action='/service/restart'>
                                     <input type='hidden' name='id' value='{{service.id}}'>
                                     <input type='submit' value='Restart'>
                                 </form>
@@ -56,7 +56,7 @@
         </ul>
 
         <h2>Start new service</h2>
-        <form metthod='post' action='/service/run'>
+        <form method='post' action='/service/run'>
             <select name='name'>
                 {% for service in available_services %}
                     <option value='{{service}}'>{{service}}</option>

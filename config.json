@@ -1,7 +1,7 @@
 {
     "buider":{
         "image": "builder",
-        "cmd": "/builder/bin/run",
+        "cmd": "/home/builder/bin/run",
         "ports": [8888],
         "port_bindings": {"8888":8888},
         "deps": ["auth", "static"]
@@ -9,7 +9,7 @@
 
     "static": {
         "image": "static",
-        "cmd": "/static/bin/run",
+        "cmd": "/home/static/bin/run",
         "ports": [9890, 8890],
         "port_bindings": {"9890":9890, "8890": 8890},
         "deps": []
@@ -17,7 +17,7 @@
 
     "auth": {
         "image": "auth",
-        "cmd": "/auth/bin/run",
+        "cmd": "/home/auth/bin/run",
         "ports": [9889],
         "port_bindings": {"9889":9889},
         "deps": []
