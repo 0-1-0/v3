@@ -10,26 +10,16 @@
                 <li>
                     <table>
                         <tr>
-                            <td>{{service}}</td>
+                            <td>
+                                <pre>
+                                    {{service}}
+                                </pre>
+                            </td>
                             
                             <td>
-                                {% if service.status == 'UP' %}
-                                    <form method='post' action='/service/stop'>
-                                        <input type='hidden' name='id' value='{{service.id}}'>
-                                        <input type='submit' value='Stop'>
-                                    </form>
-                                {% else %}
-                                    <form method='post' action='/service/start'>
-                                        <input type='hidden' name='id' value='{{service.id}}'>
-                                        <input type='submit' value='Start'>
-                                    </form>
-                                {% end %}
-                            </td>
-
-                            <td>
-                                <form method='post' action='/service/kill'>
+                                <form method='post' action='/service/stop'>
                                     <input type='hidden' name='id' value='{{service.id}}'>
-                                    <input type='submit' value='Kill'>
+                                    <input type='submit' value='Stop'>
                                 </form>
                             </td>
 
@@ -49,14 +39,12 @@
         <hr>
 
         <h2> Available services:</h2>
-        <ul>
-            {% for service in available_services %}
-                <li>{{service}}</li>
-            {% end %}
-        </ul>
+        <pre>
+            {{node_config}}
+        </pre>
 
         <h2>Start new service</h2>
-        <form method='post' action='/service/run'>
+        <form method='post' action='/service/start'>
             <select name='name'>
                 {% for service in available_services %}
                     <option value='{{service}}'>{{service}}</option>

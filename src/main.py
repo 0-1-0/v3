@@ -5,23 +5,18 @@ import networkx as nx
 from settings import *
 
 class Service(object):
-    def __init__(self, container_id, name, image, cmd, ports, status='UP'):
-        self.ip = HOST_IP
+    def __init__(self, container_id, image, cmd, ports):
         self.id = container_id
-        self.name = name
         self.image = image
         self.ports = ports
-        self.status = status
         self.cmd = cmd
-        self.name
 
     def __str__(self):
-        return """id:{0}, desc:{1}, port(s):{2}, status:{3}
+        return """id:{0}\n desc:{1}\n port(s):{2}
             """.format(
                 self.id,
-                ':'.join([self.name, self.image, self.cmd]),
-                self.ports,
-                self.status)
+                self.image + '.' + self.cmd,
+                self.ports)
     def __repr__(self):
         return self.__str__()
 
@@ -43,10 +38,7 @@ class ServiceLocator(object):
 
     def services(self):
         services = map(h2o, self._client.containers())
-        return [Service(
-                    s.Id, s.Names[0], s.Image, s.Command,
-                    s.Ports, s.Status.split()[0].upper()) \
-                for s in services]
+        return [Service(s.Id, s.Image, s.Command, s.Ports) for s in services]
 
 
 class NodeController(object):
@@ -54,8 +46,10 @@ class NodeController(object):
     def __init__(self):
         self._locator = ServiceLocator()
         self._client = self._locator._client
-        self.config = json.load(open(CONFIG_PATH))
-        for service,config in self.config.items():
+        self.config_plain = open(CONFIG_PATH).read()
+
+        self.config = json.loads(self.config_plain)
+        for service, config in self.config.items():
             self.config[service] = h2o(config)
 
     @property
@@ -66,22 +60,16 @@ class NodeController(object):
     def available_services(self):
         return self.config.keys()
 
-    def run_service(self, service_name):
+    def start_service(self, service_name):
         cnf = self.config[service_name]
         cid = self._client.create_container(
             image=cnf.image,
             ports=cnf.ports,
             detach=True,
             command=cnf.cmd)
-        self.start_service(cid, cnf.port_bindings.__dict__)
-
-    def start_service(self, cid, pb=None):
-        self._client.start(cid, port_bindings=pb)
+        self._client.start(cid, cnf.port_bindings.__dict__)
 
     def stop_service(self, cid):
-        self._client.stop(cid)
-
-    def kill_service(self, cid):
         self._client.kill(cid)
 
     def restart_service(self, cid):
@@ -107,7 +95,7 @@ class MainHandler(BaseHandler):
         self.render(
             'index.html',
             services=self._nc.services,
-            available_services=self._nc.available_services,
+            node_config=self._nc.config_plain,
             ip=HOST_IP)
 
 class ServiceHandler(BaseHandler):
