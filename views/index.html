@@ -13,10 +13,17 @@
                             <td>{{service}}</td>
                             
                             <td>
-                                <form metthod='post' action='/service/stop'>
-                                    <input type='hidden' name='id' value='{{service.id}}'>
-                                    <input type='submit' value='Stop'>
-                                </form>
+                                {% if service.status == 'UP' %}
+                                    <form metthod='post' action='/service/stop'>
+                                        <input type='hidden' name='id' value='{{service.id}}'>
+                                        <input type='submit' value='Stop'>
+                                    </form>
+                                {% else %}
+                                    <form metthod='post' action='/service/start'>
+                                        <input type='hidden' name='id' value='{{service.id}}'>
+                                        <input type='submit' value='Start'>
+                                    </form>
+                                {% end %}
                             </td>
 
                             <td>
@@ -25,11 +32,21 @@
                                     <input type='submit' value='Kill'>
                                 </form>
                             </td>
+
+                            <td>
+                                <form metthod='post' action='/service/restart'>
+                                    <input type='hidden' name='id' value='{{service.id}}'>
+                                    <input type='submit' value='Restart'>
+                                </form>
+                            </td>
+
                         </tr>
                     </table>
                 </li>
             {% end %}
         </ul>
+
+        <hr>
 
         <h2> Available services:</h2>
         <ul>
@@ -38,7 +55,7 @@
             {% end %}
         </ul>
 
-        <h2>Start Service</h2>
+        <h2>Start new service</h2>
         <form metthod='post' action='/service/run'>
             <select name='name'>
                 {% for service in available_services %}

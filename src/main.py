@@ -45,7 +45,7 @@ class ServiceLocator(object):
         services = map(h2o, self._client.containers())
         return [Service(
                     s.Id, s.Names[0], s.Image, s.Command, 
-                    s.Ports, s.Status.split()[0]) \
+                    s.Ports, s.Status.split()[0].upper()) \
                 for s in services]
 
 
@@ -66,14 +66,14 @@ class NodeController(object):
     def available_services(self):
         return self.config.keys()
 
-    def start_service(self, service):
-        cnf = self.config[service]
+    def start_service(self, service_name):
+        cnf = self.config[service_name]
         cid = self._client.create_container(
             image=cnf.image, 
             ports=cnf.ports, 
             detach=True, 
             command=cnf.cmd,
-            name=service)
+            name=service_name)
         self.start_service(cid, cnf.port_bindings)
 
     def start_service(self, cid, pb=None):
@@ -84,6 +84,9 @@ class NodeController(object):
 
     def kill_service(self, cid):
         self._client.kill(cid)
+
+    def restart_service(self, cid):
+        self._client.restart(cid)
 
     def launch_configured(self):
         g = nx.DiGraph()
@@ -124,7 +127,7 @@ class ServiceHandler(BaseHandler):
 application = web.Application(
     handlers=[
         (r"/", MainHandler),
-        (r"/service/.*", ServiceHandler),
+        (r"/service/.*/.*", ServiceHandler),
     ],
     template_path=os.path.join(APP_ROOT, 'views')
 )
