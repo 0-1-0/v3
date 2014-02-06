@@ -12,11 +12,23 @@ class Service(object):
         self.cmd = cmd
 
     def __str__(self):
-        return """id:{0}\n desc:{1}\n port(s):{2}
+        return """\n id:{0}\n desc:{1}\n port(s):{2}
             """.format(
                 self.id,
                 self.image + '.' + self.cmd,
-                self.ports)
+                '; '.join(
+                        map(
+                            lambda x: '->'.join(
+                                map(
+                                    str, [x['PublicPort'], x['PrivatePort']]
+                                    )
+                                ), 
+                            filter(
+                                lambda x: x['PrivatePort'] != 0, self.ports)
+                        )
+                    )
+                )
+
     def __repr__(self):
         return self.__str__()
 
@@ -47,10 +59,7 @@ class NodeController(object):
         self._locator = ServiceLocator()
         self._client = self._locator._client
         self.config_plain = open(CONFIG_PATH).read()
-
         self.config = json.loads(self.config_plain)
-        for service, config in self.config.items():
-            self.config[service] = h2o(config)
 
     @property
     def services(self):
@@ -63,11 +72,11 @@ class NodeController(object):
     def start_service(self, service_name):
         cnf = self.config[service_name]
         cid = self._client.create_container(
-            image=cnf.image,
-            ports=cnf.ports,
+            image=cnf['image'],
+            ports=cnf['ports'],
             detach=True,
-            command=cnf.cmd)
-        self._client.start(cid, cnf.port_bindings.__dict__)
+            command=cnf['cmd'])
+        self._client.start(cid, port_bindings=cnf['port_bindings'])
 
     def stop_service(self, cid):
         self._client.kill(cid)
@@ -96,6 +105,7 @@ class MainHandler(BaseHandler):
             'index.html',
             services=self._nc.services,
             node_config=self._nc.config_plain,
+            available_services=self._nc.available_services,
             ip=HOST_IP)
 
 class ServiceHandler(BaseHandler):

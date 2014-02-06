@@ -3,49 +3,14 @@
     <body>
         <h1> Welcome to Node {{ip}} </h1>
 
-        <h2>Running services:</h2>
-        <ul>
-            {% for service in services %}
-                <hr>
-                <li>
-                    <table>
-                        <tr>
-                            <td>
-                                <pre>
-                                    {{service}}
-                                </pre>
-                            </td>
-                            
-                            <td>
-                                <form method='post' action='/service/stop'>
-                                    <input type='hidden' name='id' value='{{service.id}}'>
-                                    <input type='submit' value='Stop'>
-                                </form>
-                            </td>
-
-                            <td>
-                                <form method='post' action='/service/restart'>
-                                    <input type='hidden' name='id' value='{{service.id}}'>
-                                    <input type='submit' value='Restart'>
-                                </form>
-                            </td>
-
-                        </tr>
-                    </table>
-                </li>
-            {% end %}
-        </ul>
-
-        <hr>
-
-        <h2> Available services:</h2>
+                <h2> Available services:</h2>
         <pre>
             {{node_config}}
         </pre>
 
         <h2>Start new service</h2>
         <form method='post' action='/service/start'>
-            <select name='name'>
+            <select name='id'>
                 {% for service in available_services %}
                     <option value='{{service}}'>{{service}}</option>
                 {% end %}
@@ -53,6 +18,36 @@
 
             <input type='submit' value='Start'>
         </form>
+
+        <hr>
+
+        <h2>Running services:</h2>
+        {% for service in services %}
+            <hr>
+                <table>
+                    <tr>
+                        <td>
+                            <pre>
+                                {{service}}
+                            </pre>
+                        </td>
+                        
+                        <td>
+                            <form method='post' action='/service/stop'>
+                                <input type='hidden' name='id' value='{{service.id}}'>
+                                <input type='submit' value='Stop'>
+                            </form>
+                        </td>
+
+                        <td>
+                            <form method='post' action='/service/restart'>
+                                <input type='hidden' name='id' value='{{service.id}}'>
+                                <input type='submit' value='Restart'>
+                            </form>
+                        </td>
+                    </tr>
+                </table>
+        {% end %}
 
     </body>
 </html>
