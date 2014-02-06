@@ -5,7 +5,7 @@ import networkx as nx
 from settings import *
 
 class Service(object):
-    def __init__(self, container_id, name, image, cmd, ports, status='RUN'):
+    def __init__(self, container_id, name, image, cmd, ports, status='UP'):
         self.ip = HOST_IP
         self.id = container_id
         self.name = name
@@ -94,9 +94,10 @@ class NodeController(object):
         for service in nx.topological_sort(g):
             self.start_service(service)
 
-
-class MainHandler(web.RequestHandler):
+class BaseHandler(web.RequestHandler):
     _nc = NodeController()
+
+class MainHandler(BaseHandler):
 
     @web.asynchronous
     @gen.engine
@@ -107,8 +108,24 @@ class MainHandler(web.RequestHandler):
             available_services=self._nc.available_services, 
             ip=HOST_IP)
 
+class ServiceHandler(BaseHandler):
+
+    @web.asynchronous
+    @gen.engine
+    def post(self):
+        cid = self.get_argument('id')
+        if cid:
+            method_name = self.request.uri.split('/')[2] + '_service'
+            getattr(self._nc, method_name).__call__(cid)
+
+        self.redirect('/')
+
+
 application = web.Application(
-    handlers=[(r"/", MainHandler)],
+    handlers=[
+        (r"/", MainHandler),
+        (r"/service/.*", ServiceHandler),
+    ],
     template_path=os.path.join(APP_ROOT, 'views')
 )
 

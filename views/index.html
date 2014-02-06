@@ -14,15 +14,15 @@
                             
                             <td>
                                 <form metthod='post' action='/service/stop'>
-                                    <input type='hidden' value='{{service.id}}'>
+                                    <input type='hidden' name='id' value='{{service.id}}'>
                                     <input type='submit' value='Stop'>
                                 </form>
                             </td>
 
                             <td>
                                 <form metthod='post' action='/service/kill'>
-                                    <input type='hidden' value='{{service.id}}'>
-                                    <input type='submit' value='KILL'>
+                                    <input type='hidden' name='id' value='{{service.id}}'>
+                                    <input type='submit' value='Kill'>
                                 </form>
                             </td>
                         </tr>
