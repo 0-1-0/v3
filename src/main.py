@@ -1,6 +1,7 @@
 from tornado import web, gen, ioloop
 import docker
 import json
+import networkx as nx
 from settings import *
 
 class Service(object):
@@ -77,8 +78,19 @@ class NodeController(object):
 
     def stop_service(self, cid):
         self._client.stop(cid)
+
     def kill_service(self, cid):
         self._client.kill(cid)
+
+    def launch_configured(self):
+        g = nx.DiGraph()
+        for service, config in self.config:
+            for dependecy in config.deps:
+                g.add_edge(service, dependecy)
+
+        for service in nx.topological_sort(g):
+            self.start_service(service)
+
 
 
 class MainHandler(web.RequestHandler):
