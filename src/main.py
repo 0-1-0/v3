@@ -2,7 +2,11 @@ from tornado import web, gen, ioloop
 import docker
 import json
 import networkx as nx
+import random
 from settings import *
+
+import sys
+sys.path.append(THRIFT_PATH)
 
 from service_locator import *
 from service_locator.ttypes import *
@@ -88,31 +92,49 @@ class NodeController(object):
         callback()
 
 
+NController = NodeController()
+
+
 class ServiceLocator(object):
 
-    def __init__(self, node_controller):
-        self._nc = node_controller
+    def __init__(self):
+        self._nc = NController
 
     @gen.engine
-    def get_runing_instances(self, service_name, callback):
-        img = self._nc.image_name_for(service_name):
+    def get_running_instances(self, service_name, callback, attempts=0):
+        img = self._nc.image_name_for(service_name)
         if img == None:
-            return []
-        services = filter(lambda s: s.image == img and s.status = 'UP', self._nc.services)
-        running_inspances = []
+            callback([])
+        services = filter(lambda s: img in s.image, self._nc.services)
+        running_instances = []
         for service in services:
-            running_inspances.append(
-                ['0.0.0.0:' + \
-                    self._nc.client.port(service.id, port['PrivatePort'])\
-                    for port in service.ports])
-        callback(running_inspances)
+            instance = ServiceInstance(ports={})
+            for port in service.ports:
+                private_port = port['PrivatePort']
+                info = self._nc._client.port(service.id, private_port)[0]
+                instance.ip = info['HostIp']
+                instance.ports[int(private_port)] = int(info['HostPort'])
+            running_instances.append(instance)
+
+        if running_instances == [] and attempts < MAX_ATTEMPTS:
+            yield gen.Task(self._nc.start_service, service_name)
+            running_instances = yield gen.Task(
+                self.get_running_instances,
+                service_name, attempts=attempts+1)
+
+        callback(running_instances)
+
+    @gen.engine
+    def get_running_instance(self, service_name, calback):
+        instances = yield gen.Task(self.get_running_instances, service_name)
+        callback(random.choice(instances))
 
 
-class BaseHandler(web.RequestHandler):
-    def __init__(self, node_controller):
-        self._nc = node_controller
+class BaseHandler():
+    def __init__(self):
+        self._nc = NController
 
-class MainHandler(BaseHandler):
+class MainHandler(web.RequestHandler):
 
     @web.asynchronous
     @gen.engine
@@ -136,6 +158,14 @@ class ServiceHandler(BaseHandler):
             yield gen.Taks(method, cid)
 
         self.redirect('/')
+
+class TServiceLocator(TTornado.TTornadoServer):
+
+    def __init__(self):
+        handler = ServiceLocator()
+        processor = TStaticService.Processor(handler)
+        pfactory = TBinaryProtocol.TBinaryProtocolFactory()
+        super(TServiceLocator, self).__init__(processor, pfactory)
 
 
 application = web.Application(

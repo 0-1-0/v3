@@ -16,3 +16,85 @@ except:
   fastbinary = None
 
 
+
+class ServiceInstance:
+  """
+  Attributes:
+   - ip
+   - ports
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'ip', None, None, ), # 1
+    (2, TType.MAP, 'ports', (TType.I32,None,TType.I32,None), None, ), # 2
+  )
+
+  def __init__(self, ip=None, ports=None,):
+    self.ip = ip
+    self.ports = ports
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.ip = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.MAP:
+          self.ports = {}
+          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin()
+          for _i4 in xrange(_size0):
+            _key5 = iprot.readI32();
+            _val6 = iprot.readI32();
+            self.ports[_key5] = _val6
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('ServiceInstance')
+    if self.ip is not None:
+      oprot.writeFieldBegin('ip', TType.STRING, 1)
+      oprot.writeString(self.ip)
+      oprot.writeFieldEnd()
+    if self.ports is not None:
+      oprot.writeFieldBegin('ports', TType.MAP, 2)
+      oprot.writeMapBegin(TType.I32, TType.I32, len(self.ports))
+      for kiter7,viter8 in self.ports.items():
+        oprot.writeI32(kiter7)
+        oprot.writeI32(viter8)
+      oprot.writeMapEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)

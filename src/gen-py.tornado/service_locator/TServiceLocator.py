@@ -27,6 +27,13 @@ class Iface(object):
     """
     pass
 
+  def get_running_instance(self, service_name, callback):
+    """
+    Parameters:
+     - service_name
+    """
+    pass
+
 
 class Client(Iface):
   def __init__(self, transport, iprot_factory, oprot_factory=None):
@@ -87,12 +94,49 @@ class Client(Iface):
     callback(TApplicationException(TApplicationException.MISSING_RESULT, "get_runing_instances failed: unknown result"))
     return
 
+  def get_running_instance(self, service_name, callback):
+    """
+    Parameters:
+     - service_name
+    """
+    self._seqid += 1
+    self._reqs[self._seqid] = callback
+    self.send_get_running_instance(service_name)
+    self.recv_dispatch()
+
+  def send_get_running_instance(self, service_name):
+    oprot = self._oprot_factory.getProtocol(self._transport)
+    oprot.writeMessageBegin('get_running_instance', TMessageType.CALL, self._seqid)
+    args = get_running_instance_args()
+    args.service_name = service_name
+    args.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def recv_get_running_instance(self, iprot, mtype, rseqid):
+    callback = self._reqs.pop(rseqid)
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(iprot)
+      iprot.readMessageEnd()
+      callback(x)
+      return
+    result = get_running_instance_result()
+    result.read(iprot)
+    iprot.readMessageEnd()
+    if result.success is not None:
+      callback(result.success)
+      return
+    callback(TApplicationException(TApplicationException.MISSING_RESULT, "get_running_instance failed: unknown result"))
+    return
+
 
 class Processor(Iface, TProcessor):
   def __init__(self, handler):
     self._handler = handler
     self._processMap = {}
     self._processMap["get_runing_instances"] = Processor.process_get_runing_instances
+    self._processMap["get_running_instance"] = Processor.process_get_running_instance
 
   @gen.engine
   def process(self, transport, iprot_factory, oprot, callback):
@@ -122,6 +166,19 @@ class Processor(Iface, TProcessor):
     result = get_runing_instances_result()
     result.success = yield gen.Task(self._handler.get_runing_instances, args.service_name)
     oprot.writeMessageBegin("get_runing_instances", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+    callback()
+
+  @gen.engine
+  def process_get_running_instance(self, seqid, iprot, oprot, callback):
+    args = get_running_instance_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = get_running_instance_result()
+    result.success = yield gen.Task(self._handler.get_running_instance, args.service_name)
+    oprot.writeMessageBegin("get_running_instance", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -197,7 +254,7 @@ class get_runing_instances_result:
   """
 
   thrift_spec = (
-    (0, TType.LIST, 'success', (TType.STRING,None), None, ), # 0
+    (0, TType.LIST, 'success', (TType.STRUCT,(ServiceInstance, ServiceInstance.thrift_spec)), None, ), # 0
   )
 
   def __init__(self, success=None,):
@@ -215,10 +272,11 @@ class get_runing_instances_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype3, _size0) = iprot.readListBegin()
-          for _i4 in xrange(_size0):
-            _elem5 = iprot.readString();
-            self.success.append(_elem5)
+          (_etype12, _size9) = iprot.readListBegin()
+          for _i13 in xrange(_size9):
+            _elem14 = ServiceInstance()
+            _elem14.read(iprot)
+            self.success.append(_elem14)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -234,10 +292,130 @@ class get_runing_instances_result:
     oprot.writeStructBegin('get_runing_instances_result')
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
-      oprot.writeListBegin(TType.STRING, len(self.success))
-      for iter6 in self.success:
-        oprot.writeString(iter6)
+      oprot.writeListBegin(TType.STRUCT, len(self.success))
+      for iter15 in self.success:
+        iter15.write(oprot)
       oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class get_running_instance_args:
+  """
+  Attributes:
+   - service_name
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'service_name', None, None, ), # 1
+  )
+
+  def __init__(self, service_name=None,):
+    self.service_name = service_name
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.service_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('get_running_instance_args')
+    if self.service_name is not None:
+      oprot.writeFieldBegin('service_name', TType.STRING, 1)
+      oprot.writeString(self.service_name)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class get_running_instance_result:
+  """
+  Attributes:
+   - success
+  """
+
+  thrift_spec = (
+    (0, TType.STRUCT, 'success', (ServiceInstance, ServiceInstance.thrift_spec), None, ), # 0
+  )
+
+  def __init__(self, success=None,):
+    self.success = success
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRUCT:
+          self.success = ServiceInstance()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('get_running_instance_result')
+    if self.success is not None:
+      oprot.writeFieldBegin('success', TType.STRUCT, 0)
+      self.success.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

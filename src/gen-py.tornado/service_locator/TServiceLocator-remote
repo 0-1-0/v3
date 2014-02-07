@@ -24,6 +24,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print ''
   print 'Functions:'
   print '   get_runing_instances(string service_name)'
+  print '  ServiceInstance get_running_instance(string service_name)'
   print ''
   sys.exit(0)
 
@@ -80,6 +81,12 @@ if cmd == 'get_runing_instances':
     print 'get_runing_instances requires 1 args'
     sys.exit(1)
   pp.pprint(client.get_runing_instances(args[0],))
+
+elif cmd == 'get_running_instance':
+  if len(args) != 1:
+    print 'get_running_instance requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.get_running_instance(args[0],))
 
 else:
   print 'Unrecognized method %s' % cmd
