@@ -4,6 +4,14 @@ import json
 import networkx as nx
 from settings import *
 
+from service_locator import *
+from service_locator.ttypes import *
+
+from thrift import TTornado
+from thrift.transport import TSocket
+from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
+
 class Service(object):
     def __init__(self, container_id, image, cmd, ports):
         self.id = container_id
@@ -85,7 +93,8 @@ class ServiceLocator(object):
     def __init__(self, node_controller):
         self._nc = node_controller
 
-    def get_instances(self, service_name, callback):
+    @gen.engine
+    def get_runing_instances(self, service_name, callback):
         img = self._nc.image_name_for(service_name):
         if img == None:
             return []
