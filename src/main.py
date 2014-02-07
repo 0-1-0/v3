@@ -40,30 +40,26 @@ def h2o(x):
         return x
 
 
-class ServiceLocator(object):
+class NodeController(object):
 
     def __init__(self):
         self._client = docker.Client(
             base_url=DOCKER_SOCK,
             version=DOCKER_V,
             timeout=TIMEOUT)
-
-    def services(self):
-        services = map(h2o, self._client.containers())
-        return [Service(s.Id, s.Image, s.Command, s.Ports) for s in services]
-
-
-class NodeController(object):
-
-    def __init__(self):
-        self._locator = ServiceLocator()
-        self._client = self._locator._client
         self.config_plain = open(CONFIG_PATH).read()
         self.config = json.loads(self.config_plain)
 
+    def image_name_for(self, service_name):
+        if service_name in self.config:
+            return self.config[service_name]['image']
+        else:
+            return None
+
     @property
     def services(self):
-        return self._locator.services()
+        services = map(h2o, self._client.containers(all=True))
+        return [Service(s.Id, s.Image, s.Command, s.Ports) for s in services]
 
     @property
     def available_services(self):
@@ -81,9 +77,6 @@ class NodeController(object):
     def stop_service(self, cid):
         self._client.kill(cid)
 
-    def restart_service(self, cid):
-        self._client.restart(cid)
-
     def launch_configured(self):
         g = nx.DiGraph()
         for service, config in self.config:
@@ -93,8 +86,27 @@ class NodeController(object):
         for service in nx.topological_sort(g):
             self.start_service(service)
 
+class ServiceLocator(object):
+
+    def __init__(self, node_controller):
+        self._nc = node_controller
+
+    def get_instances(self, service_name):
+        img = self._nc.image_name_for(service_name):
+        if img == None:
+            return []
+        services = filter(lambda s: s.image == img and s.status = 'UP', self._nc.services)
+        running_inspances = []
+        for service in services:
+            running_inspances.append(
+                ['0.0.0.0:' + \
+                    self._nc.client.port(service.id, port['PrivatePort'])\
+                    for port in service.ports])
+        return running_inspances
+
 class BaseHandler(web.RequestHandler):
-    _nc = NodeController()
+    def __init__(self, node_controller):
+        self._nc = node_controller
 
 class MainHandler(BaseHandler):
 

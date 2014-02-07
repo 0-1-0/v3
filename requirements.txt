@@ -1,8 +1,8 @@
 backports.ssl-match-hostname==3.4.0.2
-docker-py==0.2.3
+-e git+https://github.com/dotcloud/docker-py@4b090441bcb2685578c2600c9e922ab01165d007#egg=docker_py-master
 mock==1.0.1
 networkx==1.8.1
-requests==1.2.3
+requests==2.2.1
 six==1.3.0
 tornado==3.2
 websocket-client==0.11.0
