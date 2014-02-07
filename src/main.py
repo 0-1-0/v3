@@ -178,4 +178,8 @@ application = web.Application(
 
 if __name__ == "__main__":
     application.listen(HTTP_PORT)
+    tserver = TServiceLocator()
+    tserver.bind(THRIFT_PORT)
+    tserver.start(1)
+    
     ioloop.IOLoop.instance().start()

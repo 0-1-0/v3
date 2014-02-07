@@ -8,6 +8,7 @@ DOCKER_V = '0.7.6'
 TIMEOUT = 10
 
 HTTP_PORT = 8891
+THRIFT_PORT = 9891
 HOST_IP = '192.168.1.40'
 
 MAX_ATTEMPTS = 3 # can be changed to 10 during holidays
