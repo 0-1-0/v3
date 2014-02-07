@@ -84,7 +84,7 @@ class NodeController(object):
             ports=cnf['ports'],
             detach=True,
             command=cnf['cmd'])
-        self._client.start(cid, port_bindings=cnf['port_bindings'])
+        self._client.start(cid)
         callback()
 
     def stop_service(self, cid, callback):
@@ -181,5 +181,5 @@ if __name__ == "__main__":
     tserver = TServiceLocator()
     tserver.bind(THRIFT_PORT)
     tserver.start(1)
-    
+
     ioloop.IOLoop.instance().start()
