@@ -58,14 +58,14 @@ class NodeController(object):
 
     @property
     def services(self):
-        services = map(h2o, self._client.containers(all=True))
+        services = map(h2o, self._client.containers())
         return [Service(s.Id, s.Image, s.Command, s.Ports) for s in services]
 
     @property
     def available_services(self):
         return self.config.keys()
 
-    def start_service(self, service_name):
+    def start_service(self, service_name, callback):
         cnf = self.config[service_name]
         cid = self._client.create_container(
             image=cnf['image'],
@@ -73,25 +73,19 @@ class NodeController(object):
             detach=True,
             command=cnf['cmd'])
         self._client.start(cid, port_bindings=cnf['port_bindings'])
+        callback()
 
-    def stop_service(self, cid):
+    def stop_service(self, cid, callback):
         self._client.kill(cid)
+        callback()
 
-    def launch_configured(self):
-        g = nx.DiGraph()
-        for service, config in self.config:
-            for dependecy in config.deps:
-                g.add_edge(service, dependecy)
-
-        for service in nx.topological_sort(g):
-            self.start_service(service)
 
 class ServiceLocator(object):
 
     def __init__(self, node_controller):
         self._nc = node_controller
 
-    def get_instances(self, service_name):
+    def get_instances(self, service_name, callback):
         img = self._nc.image_name_for(service_name):
         if img == None:
             return []
@@ -102,7 +96,8 @@ class ServiceLocator(object):
                 ['0.0.0.0:' + \
                     self._nc.client.port(service.id, port['PrivatePort'])\
                     for port in service.ports])
-        return running_inspances
+        callback(running_inspances)
+
 
 class BaseHandler(web.RequestHandler):
     def __init__(self, node_controller):
@@ -128,7 +123,8 @@ class ServiceHandler(BaseHandler):
         cid = self.get_argument('id')
         if cid:
             method_name = self.request.uri.split('/')[2] + '_service'
-            getattr(self._nc, method_name).__call__(cid)
+            method = getattr(self._nc, method_name)
+            yield gen.Taks(method, cid)
 
         self.redirect('/')
 
