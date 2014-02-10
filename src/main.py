@@ -84,7 +84,7 @@ class NodeController(object):
             ports=cnf['ports'],
             detach=True,
             command=cnf['cmd'])
-        self._client.start(cid)
+        self._client.start(cid, publish_all_ports=True)
         callback()
 
     def stop_service(self, cid, callback):
@@ -130,11 +130,10 @@ class ServiceLocator(object):
         callback(random.choice(instances))
 
 
-class BaseHandler():
-    def __init__(self):
-        self._nc = NController
+class BaseHandler(web.RequestHandler):
+    _nc = NController
 
-class MainHandler(web.RequestHandler):
+class MainHandler(BaseHandler):
 
     @web.asynchronous
     @gen.engine
@@ -155,17 +154,17 @@ class ServiceHandler(BaseHandler):
         if cid:
             method_name = self.request.uri.split('/')[2] + '_service'
             method = getattr(self._nc, method_name)
-            yield gen.Taks(method, cid)
+            yield gen.Task(method, cid)
 
         self.redirect('/')
 
-class TServiceLocator(TTornado.TTornadoServer):
+class TLocatorServer(TTornado.TTornadoServer):
 
     def __init__(self):
         handler = ServiceLocator()
-        processor = TStaticService.Processor(handler)
+        processor = TServiceLocator.Processor(handler)
         pfactory = TBinaryProtocol.TBinaryProtocolFactory()
-        super(TServiceLocator, self).__init__(processor, pfactory)
+        super(TLocatorServer, self).__init__(processor, pfactory)
 
 
 application = web.Application(
@@ -178,7 +177,7 @@ application = web.Application(
 
 if __name__ == "__main__":
     application.listen(HTTP_PORT)
-    tserver = TServiceLocator()
+    tserver = TLocatorServer()
     tserver.bind(THRIFT_PORT)
     tserver.start(1)
 

@@ -2,25 +2,19 @@
     "buider":{
         "image": "builder",
         "cmd": "/home/builder/bin/run",
-        "ports": [8888],
-        "port_bindings": {"8888":8888},
-        "deps": ["auth", "static"]
+        "ports": [8888]
     },
 
     "static": {
         "image": "static",
         "cmd": "/home/static/bin/run",
-        "ports": [9890, 8890],
-        "port_bindings": {"9890":9890, "8890": 8890},
-        "deps": []
+        "ports": [9890, 8890]
     },
 
     "auth": {
         "image": "auth",
         "cmd": "/home/auth/bin/run",
-        "ports": [9889],
-        "port_bindings": {"9889":9889},
-        "deps": []
+        "ports": [9889]
     }
 
 }
